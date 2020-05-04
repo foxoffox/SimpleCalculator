@@ -35,58 +35,57 @@ namespace Calculator {
         private string Prepare(string inputExpression) {
             string output = string.Empty;
             Stack<char> operators = new Stack<char>();
-            //try {
-                for (int i = 0; i < inputExpression.Length; i++) {
-                    // если текущий символ - число, то просто помещаем его в выходную строку
-                    if (char.IsDigit(inputExpression[i]) | inputExpression[i] == '.' | inputExpression[i] == ',') {
-                        if (i == inputExpression.Length) {
-                            output += inputExpression[i] + " ";
-                        }
-                        else {
-                            output += inputExpression[i];
-                        }
+            for (int i = 0; i < inputExpression.Length; i++) {
+                // если текущий символ - число, то просто помещаем его в выходную строку
+                if (char.IsDigit(inputExpression[i]) | inputExpression[i] == '.' | inputExpression[i] == ',') {
+                    if (i == inputExpression.Length) {
+                        output += inputExpression[i] + " ";
                     }
-                    // если символ - не число
                     else {
+                        output += inputExpression[i];
+                    }
+                }
+                // если символ - не число
+                else {
                     if (output.Last() != ' ') {
                         output += " ";
                     }   //если стек операторов пуст, то добавляем в стек
-                        if (operators.Count == 0) {
+                    if (operators.Count == 0) {
+                        operators.Push(inputExpression[i]);
+                    }
+                    else {
+                        //если символ - открывающая скобка, то она имеет наивысший приоритет и добавляем ее в стек
+                        if (inputExpression[i] == '(') {
+                            operators.Push(inputExpression[i]);
+                            continue;
+                            //если символ - закрывающая скобка, то все операторы до входной скобки выгружаем из стека во входную строку
+                        }
+                        else if (inputExpression[i] == ')') {
+                            while (operators.Peek() != '(') {
+                                output += operators.Pop() + " ";
+                            }
+                            operators.Pop();
+                            continue;
+                            // если символ не скобка, то проверяем приоритет знака, если приоритет текущего знака меньше приоритета знака вверху стека, выгужаем знак(и)
+                            // до тех пор пока приоритет знака в стеке не будет меньше приоритета входного знака
+                        }
+                        if (operators.Count > 0 && GetPriority(inputExpression[i]) <= GetPriority(operators.Peek())) {
+                            while (operators.Count > 0 && GetPriority(inputExpression[i]) <= GetPriority(operators.Peek())) {
+                                output += operators.Pop() + " ";
+                            }
                             operators.Push(inputExpression[i]);
                         }
                         else {
-                        //если символ - открывающая скобка, то она имеет наивысший приоритет и добавляем ее в стек
-                            if (inputExpression[i] == '(') {
-                                operators.Push(inputExpression[i]);
-                                continue;
-                            //если символ - закрывающая скобка, то все операторы до входной скобки выгружаем из стека во входную строку
-                            }else if (inputExpression[i] == ')') {
-                                while(operators.Peek() != '(') {
-                                    output += operators.Pop() + " ";
-                                }operators.Pop();
-                                continue;
-                            // если символ не скобка, то проверяем приоритет знака, если приоритет текущего знака меньше приоритета знака вверху стека, выгужаем знак(и)
-                            // до тех пор пока приоритет знака в стеке не будет меньше приоритета входного знака
-                            }if(operators.Count > 0 && GetPriority(inputExpression[i]) <= GetPriority(operators.Peek())) {
-                                while(operators.Count > 0 && GetPriority(inputExpression[i]) <= GetPriority(operators.Peek())) {
-                                    output += operators.Pop() + " ";
-                                }
-                                operators.Push(inputExpression[i]);
-                            }
-                            else {
-                                operators.Push(inputExpression[i]);
-                            }
-                        }   
-                    }   
+                            operators.Push(inputExpression[i]);
+                        }
+                    }
                 }
-            //} catch (Exception) {
-            //    Console.WriteLine("Допущены ошибки в ввыражении");
-            //}
+            }
             // если в стеке еще остаются знаки операций, извлекаем их из стека в выходную строку
             if (operators.Count > 0) {
                 output += " ";
                 while (operators.Count > 0) {
-                    output += operators.Pop()+ " ";
+                    output += operators.Pop() + " ";
                 }
             }
             return output;
