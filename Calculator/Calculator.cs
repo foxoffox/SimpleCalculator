@@ -1,5 +1,4 @@
-﻿using Calculator.Operations;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -100,7 +99,6 @@ namespace Calculator {
         /// <param name="preparedExpression">Нормализованное выражение</param>
         /// <param name="result">Результат операции</param>
         private void Calculate(string preparedExpression, out double result) {
-            MathOperation operation = new MathOperation();
             Stack<double> temp = new Stack<double>();
             foreach (string item in preparedExpression.Split(' ')) {
                 try {
@@ -154,7 +152,7 @@ namespace Calculator {
                 default: return 0;
             }
         }
-        #endregion
+        #endregion       
         #region Очистка ресурсов
         /// <summary>
         /// Очистка ресурсов
