@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Calculator.Operations;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -35,59 +36,58 @@ namespace Calculator {
         private string Prepare(string inputExpression) {
             string output = string.Empty;
             Stack<char> operators = new Stack<char>();
-            try {
+            //try {
                 for (int i = 0; i < inputExpression.Length; i++) {
-                    // если этот символ - число, то просто помещаем его в выходную строку
-                    if (Regex.IsMatch($"{inputExpression[i]}", "[0-9,.]")) {
-                        if (inputExpression[i] == '.') {
-                            output += inputExpression[i].ToString().Replace(".", ",");
-                            continue;
+                    // если текущий символ - число, то просто помещаем его в выходную строку
+                    if (char.IsDigit(inputExpression[i]) | inputExpression[i] == '.' | inputExpression[i] == ',') {
+                        if (i == inputExpression.Length) {
+                            output += inputExpression[i] + " ";
                         }
-                        output += inputExpression[i];
+                        else {
+                            output += inputExpression[i];
+                        }
                     }
+                    // если символ - не число
                     else {
-                        // проверяем знак, если если разделитель, то пропускаем
-                        if (IsDelimeter(inputExpression[i]))
-                            continue;
-                        // проверка последнего символа в выходной строке, является ли оно числом
-                        if (char.IsDigit(output.Last()))
-                            output += " ";
-                        //
-                        if (operators.Count == 0 && IsOperator(inputExpression[i]) && !IsDelimeter(inputExpression[i])) {
+                    if (output.Last() != ' ') {
+                        output += " ";
+                    }   //если стек операторов пуст, то добавляем в стек
+                        if (operators.Count == 0) {
                             operators.Push(inputExpression[i]);
-                            continue;
                         }
-                        // проверяем знак операции (+, -, *, / ), если true, то проверяем приоритет данной операции
-                        if (inputExpression[i] != ')' && IsOperator(inputExpression[i]) && !IsDelimeter(inputExpression[i])) {
-                            // если текущий символ - открывающая скобка, то помещаем ее в стек иначе проверяем приоритет знака
-                            if (GetPriority(inputExpression[i]) >= GetPriority(operators.Peek()) | inputExpression[i] == '(') {
+                        else {
+                        //если символ - открывающая скобка, то она имеет наивысший приоритет и добавляем ее в стек
+                            if (inputExpression[i] == '(') {
                                 operators.Push(inputExpression[i]);
-                            }
-                            else {
-                                while (operators.Count > 0 && GetPriority(inputExpression[i]) <= GetPriority(operators.Peek())) {
+                                continue;
+                            //если символ - закрывающая скобка, то все операторы до входной скобки выгружаем из стека во входную строку
+                            }else if (inputExpression[i] == ')') {
+                                while(operators.Peek() != '(') {
+                                    output += operators.Pop() + " ";
+                                }operators.Pop();
+                                continue;
+                            // если символ не скобка, то проверяем приоритет знака, если приоритет текущего знака меньше приоритета знака вверху стека, выгужаем знак(и)
+                            // до тех пор пока приоритет знака в стеке не будет меньше приоритета входного знака
+                            }if(operators.Count > 0 && GetPriority(inputExpression[i]) <= GetPriority(operators.Peek())) {
+                                while(operators.Count > 0 && GetPriority(inputExpression[i]) <= GetPriority(operators.Peek())) {
                                     output += operators.Pop() + " ";
                                 }
                                 operators.Push(inputExpression[i]);
                             }
-                        }
-                        //иначе извлекаем символы из стека в выходную строку до тех пор, пока не встретим в стеке открывающую скобку
-                        else {
-                            while (operators.Peek() != '(') {
-                                output += operators.Pop() + " ";
+                            else {
+                                operators.Push(inputExpression[i]);
                             }
-                            operators.Pop();
-                        }
-                    }
+                        }   
+                    }   
                 }
-            } catch (Exception) {
-                Console.WriteLine("Допущены ошибки в ввыражении");
-            }
+            //} catch (Exception) {
+            //    Console.WriteLine("Допущены ошибки в ввыражении");
+            //}
             // если в стеке еще остаются знаки операций, извлекаем их из стека в выходную строку
             if (operators.Count > 0) {
-                if (char.IsDigit(output.Last()))
-                    output += " ";
+                output += " ";
                 while (operators.Count > 0) {
-                    output += operators.Pop() + " ";
+                    output += operators.Pop()+ " ";
                 }
             }
             return output;
@@ -100,6 +100,7 @@ namespace Calculator {
         /// <param name="preparedExpression">Нормализованное выражение</param>
         /// <param name="result">Результат операции</param>
         private void Calculate(string preparedExpression, out double result) {
+            MathOperation operation = new MathOperation();
             Stack<double> temp = new Stack<double>();
             foreach (string item in preparedExpression.Split(' ')) {
                 try {
@@ -126,18 +127,13 @@ namespace Calculator {
         /// <returns>Приоритет (byte)</returns>
         private byte GetPriority(char c) {
             switch (c) {
-                case '(':
-                    return 1;
-                case '+':
-                    return 2;
-                case '-':
-                    return 2;
-                case '*':
-                    return 3;
-                case '/':
-                    return 3;
-                default:
-                    return 0;
+                case '(': return 1;
+                case ')': return 2;
+                case '+': return 3;
+                case '-': return 3;
+                case '*': return 4;
+                case '/': return 4;
+                default: return 0;
             }
         }
         #endregion
@@ -151,35 +147,12 @@ namespace Calculator {
         /// <returns>Возвращает результат операции</returns>
         private double GetTempResult(double num1, double num2, char op) {
             switch (op) {
-                case '+':
-                    return num2 + num1;
-                case '-':
-                    return num2 - num1;
-                case '*':
-                    return num2 * num1;
-                case '/':
-                    return num2 / num1;
-                default:
-                    return 0;
+                case '+': return num2 + num1;
+                case '-': return num2 - num1;
+                case '*': return num2 * num1;
+                case '/': return num2 / num1;
+                default: return 0;
             }
-        }
-        #endregion
-        #region Проверки
-        /// <summary>
-        /// Проверка, является ли входной символ разделителем
-        /// </summary>
-        /// <param name="c">Входной символ</param>
-        /// <returns>true, если вимвол является разделителем</returns>
-        private bool IsDelimeter(char c) {
-            return _Delimeters.IndexOf(c) != -1 ? true : false;
-        }
-        /// <summary>
-        /// Проверка, является ли входной символ оператором
-        /// </summary>
-        /// <param name="c">Входной символ</param>
-        /// <returns>true, если символ является оператором</returns>
-        private bool IsOperator(char c) {
-            return _Operators.IndexOf(c) != -1 ? true : false;
         }
         #endregion
         #region Очистка ресурсов
